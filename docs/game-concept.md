@@ -1,14 +1,17 @@
 # Tidebreak — Game Concept
 
-> Working title. Mobile 5v5 MOBA · iOS / Android · Free-to-play · Concept v0.1
+> Working title. Mobile 5v5 MOBA · iOS / Android · Free-to-play · Built in Unity · Concept v0.2
+
+Companion documents:
+- [Art direction & visual development plan](art-direction.md): how the game looks, and the visual work we finish before production code starts.
 
 ## 1. The pitch
 
 **A full-depth 5v5 MOBA that fits in a 12-minute bus ride, on a map that changes under your feet.**
 
-Tidebreak is fought on a coastline where the sea rises and falls on a fixed rhythm. Every tide reshapes the map: river paths flood or dry out, shortcuts open, and buried objectives come to the surface. Teams don't just farm until the next big monster; they plan around the next tide.
+Tidebreak is fought on a coastline where the sea rises and falls on a fixed rhythm. Everyone knows *when* the tide will rise. Nobody knows *which way the river will run* until it does. When the water turns, one side of the map suddenly becomes a fast highway for ganks and the other becomes a slog. Teams prepare for both outcomes, then race to exploit the one they get.
 
-Around that hook we fix the things mobile MOBA players complain about most: matches that drag on, games decided by one AFK player, pre-game grind that buys stat advantages, roles nobody wants to play, and toxic chat.
+Around that hook we fix the things mobile MOBA players complain about most: matches that drag on, games decided by one AFK player, pre-game grind that buys stat advantages, positions nobody wants to play, and toxic chat.
 
 ## 2. Where the market is, and the gap
 
@@ -19,198 +22,303 @@ Around that hook we fix the things mobile MOBA players complain about most: matc
 | Wild Rift | ~15–20 min | PC-grade depth, well-known IP | Long matches for mobile; slow hero unlocks; heavy device needs |
 | Pokémon Unite | 10 min fixed | Approachable, strong IP | Shallower strategy; held-item progression felt pay-to-win at launch |
 
-The gap: **nobody combines PC-level strategic depth with a reliably short match, zero paid stat power, and a map that keeps the mid-game varied.** That is the slot Tidebreak goes for. We can't win on IP or on roster size at launch, so we win on how the game *feels* to play every day.
+*(Figures are approximate and should be re-checked against current data before external use.)*
+
+The gap: **nobody combines PC-level strategic depth with a reliably short match, zero paid stat power, and a map that keeps the mid-game unpredictable.** We can't win on IP or launch roster size, so we win on how the game *feels* to play every day.
 
 ## 3. Design pillars
 
 1. **Twelve minutes, every minute matters.** Median match of 12–13 min, hard ceiling around 18. No dead farming windows.
 2. **Skill is the only stat.** Nothing bought or ground outside a match changes combat numbers. No emblems, runes, or stat-bearing cosmetics.
-3. **The map is a player.** The tide cycle forces decisions on a clock everyone can see.
-4. **Every role is a main character.** Support and tank get kits and rewards that make people *want* to queue for them.
+3. **Know when, not which way.** The tide schedule is fixed and visible; the river's direction is revealed only at the moment it rises. Preparation and reaction both matter.
+4. **Every position is a main character.** Support, Cliff lane and Jungle each have moments that decide games, and rewards that make people *want* to queue for them.
 5. **A bad teammate shouldn't ruin your night.** AFK protection, bot takeover, comms built for cooperation, not arguing.
 6. **Runs on the phone you already have.** A 3 GB RAM Android at stable 30 fps; 60/120 fps on mid-range and flagship.
 
-## 4. Core match structure
+## 4. The map
 
-5v5, three lanes, a jungle, two bases. Familiar enough that MOBA veterans are productive in game one; the twist is the clock.
+5v5, three lanes, a jungle split into four quadrants, a river cutting diagonally across the middle, two bases.
 
-### The three acts
+### Lanes are named by landmark, not "top" and "bottom"
 
-| Act | Time | What's happening | Win condition pressure |
+Like other mobile MOBAs, the red team's camera is rotated 180° so both teams see their own base in the bottom-left. That means "top" for one team is "bottom" on the other team's screen. To keep communication unambiguous, lanes and river directions are named by landmark:
+
+| Lane | Look | Usual occupants |
+|---|---|---|
+| **Cliff lane** | Sea cliffs, gull rookeries, wind-bent pines | Solo laner |
+| **Causeway** (mid) | A half-sunken stone road between the two cities | Mid laner |
+| **Mangrove lane** | Roots, boardwalks, tidepools | Carry + Support |
+
+The **river** runs from the Cliff end to the Mangrove end, crossing the Causeway in the center.
+
+## 5. The tide
+
+### When: fixed and visible
+
+| Time | Tide event | Water state |
+|---|---|---|
+| 0:00 | Match start | **Low tide** — shallow, still river |
+| 4:00 | **First rise** | High tide — current direction revealed |
+| 6:00 | Fall | Low tide — Shrines surface |
+| 8:00 | **Second rise** | High tide — direction revealed again |
+| 10:00 | **The Surge** | Permanent high tide; direction revealed |
+| 12:00, 14:00, … | **Churn** | Still high tide, direction re-rolled every 2 min |
+
+The tide clock sits beside the match timer, a 15-second warning plays before each rise, and a haptic pulse fires at 5 seconds. Everyone can plan around *when*.
+
+### Which way: revealed at the rise
+
+When the tide rises, the river starts flowing either **toward the Cliffs** or **toward the Mangroves**. Players find out which at the moment of the rise, not before.
+
+**The rules (semi-random):**
+- Each rise is a 50/50 roll between the two directions.
+- **No three in a row:** the river can't flow the same way three rises running. After two of the same, the third is guaranteed to flip. This gives attentive teams a small, earned edge, and stops one side of the map from being dull for a whole match.
+- The result is decided on the server at the reveal moment and sent to clients only then. It can't be found by data-mining, prediction, or modified clients.
+- The map is symmetrical across the river, so neither direction favors the blue or red team. Live telemetry will watch for any imbalance (win rate by direction × side × position).
+
+**What the direction changes:**
+
+| | Downstream side (where the water flows to) | Upstream side (where it flows from) |
+|---|---|---|
+| River movement | +30% move speed moving with the current | −20% moving against it |
+| Jungle access | Two **spillways** open: fast-water chutes from the river into both teams' jungles on that side | The river mouth deepens; two jungle entrances flood shut |
+| Objectives | The **Leviathan** surfaces here (from 8:00) | — |
+| Drifting loot | **Flotsam** caches wash down the river and beach here | — |
+| Net effect | Fast, dangerous, high-traffic: ganks arrive from the river quickly | Slower and safer, but cut off from the fight |
+
+### The Turn: the reveal moment
+
+Every rise plays out as a three-second sequence called **the Turn**:
+
+1. **Slack water (0–1 s):** the water level climbs and the river goes perfectly still. River movement is neutral.
+2. **Churn (1–2.5 s):** whirlpools form along the river. Audio swells; neither direction is hinted.
+3. **Commit (2.5–3 s):** a surge wave rolls from the upstream end toward the downstream end, the current snaps into place, and a direction arrow appears on the HUD and minimap.
+
+Those three seconds are the most tense in the game. They're designed to be watched: a visible, audible "dice roll" that every player and every spectator sees at the same time.
+
+### How it plays
+
+- **Before the rise:** junglers hold central positions that can reach either side. Laners keep their waves in states that are safe whichever way the water goes. Supports ward *both* spillways or choose to gamble on one.
+- **The first 20 seconds after the Turn:** the downstream side is the most gankable spot on the map. The team that reacts fastest wins it.
+- **The upstream side:** the laners there get a short window of safety to push, recall, or take a tower.
+- **Mind games:** after two rises the same way, both teams know the third will flip, and plan for it.
+
+## 6. Objectives
+
+| Objective | When | Reward | Notes |
 |---|---|---|---|
-| **I. Ebb** | 0:00–4:00 | Laning, first jungle clears. Tide is *low*: the river is shallow and walkable everywhere. | First **Shrine** (see below) surfaces at 3:00. |
-| **II. Flow** | 4:00–10:00 | Tide alternates high/low every 2 minutes. Each shift opens or closes paths and surfaces an objective. | Shrines, the **Leviathan**, and first towers fall. |
-| **III. Surge** | 10:00+ | The tide reaches a permanent high. The outer river floods, lanes compress toward the center, and the bases' **Tide Gates** open. | Base pressure; respawn timers grow fast; the **Crown Tide** event forces a decisive fight. |
-
-### The tide
-
-- **Low tide:** The river is shallow. Anyone can cross anywhere. **Sunken Shrines** are exposed and can be captured.
-- **High tide:** The river becomes a current. Moving *with* the current grants +30% move speed; moving against it is slowed. Two jungle paths per side flood shut, and a **sandbar bridge** opens across mid. Ganks become predictable on one side and fast on the other.
-- A tide clock sits on the HUD next to the match timer. A 15-second warning plays before each shift. Everyone always knows what's coming, so this is strategy, not randomness.
-
-### Objectives
-
-| Objective | When | Reward | Why it's different |
-|---|---|---|---|
-| **Sunken Shrine** (×2, one per river half) | Every low tide from 3:00 | Capture by standing in the circle (5 s, contested pauses it). Grants a team-wide **Tide Blessing** that stacks up to 3 (choose one of two each capture: e.g. +ability haste, or shields after dashes). | Short, readable fights that small teams can win. Choices create build-like team identity without pre-game grind. |
-| **Leviathan** | 7:00, then every 3 min at high tide | Killing team's minions are carried by a **tidal wave** down one chosen lane, which hits towers hard for 60 s. | The reward is *pushing*, not raw stats, so it converts into an ending instead of a snowball. |
-| **Crown Tide** | 14:00 if the game is still going | A wave sweeps both bases. The **Heart** (nexus) loses its regeneration and the team holding more Shrine Blessings gets a 20 s empowered push. | A designed finale that caps match length without a coin-flip sudden-death rule. |
+| **Sunken Shrines** (×2, one per river half) | 3:00 in the Ebb, then every low tide | Capture by standing in the circle (5 s; contesting pauses it). Grants a team-wide **Tide Blessing**, stacking to 3: choose one of two each capture. | Short, readable fights that any team composition can contest. |
+| **Leviathan** | Surfaces at the downstream river mouth 30 s after the 8:00 rise; respawns at the next rise or churn after it dies | The killing team's minions are carried by a **tidal wave** down one chosen lane for 60 s, hitting towers hard. | Location changes with the current, so even the big objective is part of the reveal. The reward must be spent, not banked. |
+| **Flotsam caches** | Every high tide | Drift down the current and wash up downstream; break one for gold and a short speed boost. | Pulls junglers and supports into the river right after the Turn. |
+| **Crown Tide** | Replaces the 14:00 churn | The base gates open, the **Heart** (nexus) stops regenerating, and the team holding more Shrine Blessings gets a 20 s empowered push. | A designed finale that caps match length. |
 
 ### Comeback without coin flips
 
-- **Bounties** on players with kill streaks and on teams ahead in gold, paid out mostly as *experience* (catches you up in levels) rather than gold.
-- Shrines are capture objectives, not damage races, so the team that's behind can still contest with good positioning.
-- The **Leviathan's** reward expires: you have to use it, you can't bank it.
+- **Bounties** on kill streaks and on teams ahead in gold, paid mostly as *experience* (catches you up in levels) rather than gold.
+- Shrines are capture objectives, not damage races, so the team that's behind can contest with good positioning.
+- The random current direction gives the losing team regular openings to catch a split enemy out of position.
 
-## 5. Heroes
+## 7. Positions and classes
 
-### Roles
+Tidebreak separates **what a hero is** (their class) from **where they play** (their position).
 
-| Role | Job | What we change |
+### Positions: what you queue for
+
+| Position | Where | Job |
 |---|---|---|
-| **Vanguard** (tank) | Start fights, protect | Every Vanguard has a "big moment" ultimate that changes terrain or displaces multiple enemies. |
-| **Striker** (fighter / assassin) | Dive, duel | Clear windows in and out; strict counterplay rules (every dash has a visible tell). |
-| **Arcanist** (mage) | Zone, burst | Many Arcanist kits interact with water and the tide. |
-| **Marksman** | Sustained damage | Fewer self-peel tools; relies on team. |
-| **Warden** (support) | Enable, save, vision | Wardens own the **vision economy** (see below) and earn the most from Shrine captures. Their saves appear on the end-of-match screen as highlights. |
+| **Cliff** | Cliff lane, solo | Hold a lane alone, split-push, teleport into fights |
+| **Jungle** | The four jungle quadrants and the river | Farm camps, gank, control objectives, and react first to every Turn |
+| **Mid** | Causeway | Roam to both sides; first to any river fight |
+| **Carry** | Mangrove lane | Scale into the main damage dealer |
+| **Support** | Mangrove lane, then everywhere | Vision, protection, and starting fights |
 
-There's no dedicated jungler role. The jungle is shared by whoever is roaming, usually the Striker or Vanguard. That keeps one of the hardest-to-learn roles from blocking new players.
+Ranked uses role queue across these five positions.
+
+### Classes: what a kit does
+
+| Class | Kit identity |
+|---|---|
+| **Vanguard** (tank) | Starts fights and protects; every Vanguard has a big moment ultimate that changes terrain or moves multiple enemies |
+| **Striker** (fighter / assassin) | Dives and duels; clear windows in and out; every dash has a visible tell |
+| **Arcanist** (mage) | Zones and bursts; many kits interact with water |
+| **Marksman** | Sustained ranged damage; few self-defence tools |
+| **Warden** (support) | Enables, saves, and controls vision |
+
+A class is not a position. A Vanguard might play Cliff, Jungle, or Support. A Striker might play Jungle, Cliff, or Mid.
+
+### Designed for the jungle, without a jungler class
+
+"Jungler" is a position, not a class. But some heroes are deliberately designed to be great at it. These **jungle-natural** heroes come from several classes and share some of these traits:
+
+- **Efficient clearing:** area damage, sustain, or abilities that reset on monster kills.
+- **Terrain mobility:** crossing walls, reefs, or water faster than other heroes.
+- **A gank tool:** crowd control or burst that lands from fog of war.
+- **Tide reaction:** something in the kit that rewards responding quickly to the Turn (for example, a speed burst toward the downstream side right after it's revealed). These traits reward *reacting* to the reveal; none of them lets a player know the direction early.
+
+Any hero *can* jungle. Jungle-naturals just do it noticeably better, the way some heroes are clearly better solo laners.
+
+**In draft**, each hero shows its **natural positions** (one or two, designed for) and **viable positions** (works with the right build). This guides newer players without forbidding experiments.
+
+**Launch target:** at least 6 jungle-natural heroes spread across at least 3 classes, so junglers have a real choice of playstyle (tank jungler, assassin jungler, mage jungler).
+
+### Jungle systems
+
+- **Tidehook:** a jungle relic (the "smite" equivalent). It deals heavy true damage to monsters, secures objectives, and lets you hook onto river debris to cross water. Taking lane minion gold while holding it is heavily penalized, so it's a natural fit only in the Jungle position. After 20 camp clears it evolves into one of two forms the player chooses:
+  - **Riptide Hook** (ganking): hooking a champion slows them and reveals them briefly.
+  - **Anchor Hook** (control): bonus damage to the Leviathan and a shield while standing in a Shrine.
+- **Camps:** four camps per quadrant, with clear first-clear routes reaching the river at ~1:30.
+- **Tidepool camps:** small camps along the river banks that exist only at **low tide**. They give bonus gold and a short vision sweep of the river, so junglers fight over the river even before the first rise.
+- **Flotsam** (see objectives) gives junglers and supports a reason to collide right after each Turn.
+- **Early-game rhythm:** first clear → Shrine at 3:00 → first Turn at 4:00. The first Turn is the jungler's defining decision of the early game.
+
+## 8. Heroes
 
 ### Kits: 4 abilities + 2 Attunements
 
-Every hero has a passive, two abilities, and an ultimate. The depth comes from **Attunements**: at level 4 and level 8, each player picks one of two upgrades that change *how* an ability works (not just numbers).
-
-This replaces runes and emblems. Customization happens **inside the match**, where it responds to the actual game, and it can't be bought.
+Every hero has a passive, two abilities, and an ultimate. At level 4 and level 8, each player picks one of two **Attunements**: upgrades that change *how* an ability works, not just its numbers. This replaces runes and emblems. Customization happens inside the match, where it responds to the actual game, and it can't be bought.
 
 ### Sample launch heroes
 
-**Maren, the Undertow** — *Vanguard*
+**Isra Coil** — *Striker* · Natural: **Jungle** · Viable: Mid
+- Passive: *Current Rider.* Gains double the river's speed bonus. For 4 s after each Turn, gains bonus move speed in the direction of the current anywhere on the map.
+- 1: *Slipstream.* Dash. Recasts on hitting a champion; resets on killing a monster.
+- 2: *Coil.* Spins, damaging nearby enemies and becoming briefly untargetable.
+- Ult: *Rogue Wave.* Marks an enemy, then crashes down on them after 1.5 s (telegraphed to the target).
+- *Why she junglers well:* clears with resets, gets to the downstream side first after every Turn.
+
+**Grothmaw, the Reef Hulk** — *Vanguard* · Natural: **Jungle** · Viable: Cliff, Support
+- Passive: *Coral Hide.* Killing monsters grows a stacking armor shell that shatters for damage when Grothmaw is crowd-controlled.
+- 1: *Burrow.* Tunnels through a reef wall or short stretch of terrain; enemies above the exit point are knocked up.
+- 2: *Slam.* Ground pound that slows and clears camps quickly.
+- Ult: *Tidal Charge.* Charges in a line, carrying enemies with him. Travels twice as far when charging downstream.
+- *Why he junglers well:* terrain mobility, a gank tool from fog, and a reward for reading the current fast. A tank jungler who sets up fights instead of finishing them.
+
+**Maren, the Undertow** — *Vanguard* · Natural: **Support**, **Cliff**
 - Passive: *Riptide.* Standing in river water builds a stacking shield.
 - 1: *Anchor Toss.* Throws an anchor; hit an enemy to pull yourself to them.
 - 2: *Breakwater.* Raises a short wall of water that blocks projectiles.
 - Ult: *Drown the Shore.* Floods a large circle for 4 s; enemies inside are slowed and pulled toward the center.
 - Attunement 4: Breakwater becomes a *moving* wall *or* Anchor Toss pulls the enemy to you instead.
 
-**Kesh Varo, the Lantern** — *Warden*
-- Passive: *Guiding Light.* Allies who move near Kesh's lantern trail gain move speed.
+**Kesh Varo, the Lantern** — *Warden* · Natural: **Support**
+- Passive: *Guiding Light.* Allies who move along Kesh's lantern trail gain move speed.
 - 1: *Beacon.* Places a lantern that reveals an area and heals allies standing in it.
 - 2: *Tether.* Links to an ally; the next lethal damage they take within 3 s is redirected to Kesh as a shield.
 - Ult: *Lighthouse.* Kesh becomes a stationary tower of light for 5 s: reveals the whole river and shoots beams at enemies in range.
 - Attunement 8: Lighthouse can be cast on an ally *or* Tether can link two allies to each other.
 
-**Isra Coil** — *Striker*
-- Passive: *Current Rider.* Gains double the tide speed bonus.
-- 1: *Slipstream.* Dash. Recasts on hitting a champion.
-- 2: *Coil.* Spins, damaging nearby enemies and becoming briefly untargetable.
-- Ult: *Rogue Wave.* Marks an enemy, then crashes down on them after 1.5 s (telegraphed to the target).
+**Vael Ashdown** — *Arcanist* · Natural: **Mid** · Viable: Jungle
+- Steam mage: abilities do more damage to targets standing in water, and evaporate flooded terrain to create cover. Strongest at high tide, weakest at low tide. A tide-dependent jungler pick for teams that plan to fight in the river.
 
-**Vael Ashdown** — *Arcanist*
-- Steam mage: abilities do more damage to targets standing in water, and evaporate flooded terrain to create cover. Strongest at high tide, weakest at low tide. Players time aggression to the tide.
-
-**Dorrin & Pip** — *Marksman*
+**Dorrin & Pip** — *Marksman* · Natural: **Carry**
 - A crossbow ranger and a crab who carries the bolts. Pip can be sent to a spot to act as a forward ward and second firing point. Teaches positioning through a cute, readable kit.
 
 ### Roster plan
 
-- Launch: **30 heroes** (6 per role). Smaller than competitors, but each with Attunements, so effective variety is closer to 60 playstyles.
-- Post-launch: 1 new hero every ~4 weeks, plus one **rework** per season.
-- Free rotation of 10 heroes weekly; every hero earnable through play (target: a casual player earns a new hero every ~5–7 days).
+- Launch: **30 heroes**, with at least 6 natural picks for each position. Attunements put effective variety closer to 60 playstyles.
+- Post-launch: one new hero every ~4 weeks, plus one **rework** per season.
+- Free rotation of 10 heroes weekly, always covering every position. Every hero is earnable through play (target: a casual player earns a new hero every ~5–7 days).
 
-## 6. Items
+## 9. Items
 
-- **Five slots + boots.** Around 60 items at launch.
-- **Recommended build** auto-adjusts mid-match to enemy composition (e.g. suggests anti-heal when the enemy team heals heavily). One-tap buy from the HUD without opening the shop.
-- **Relics:** one active-item slot (dash, shield, cleanse, etc.) chosen in the shop, like a second summoner spell you can swap later.
-- Gold from Shrines is shared, so Wardens don't fall behind.
+- **Five slots + boots.** About 60 items at launch.
+- **Recommended build** auto-adjusts mid-match to enemy composition. One-tap buy from the HUD without opening the shop.
+- **Relics:** one active-item slot (dash, shield, cleanse, etc.), swappable in the shop. The **Tidehook** is the jungle relic.
+- Gold from Shrines is shared, so Supports don't fall behind.
 
-## 7. Controls & feel
+## 10. Controls & feel
 
 - **Twin-stick by default**, with smart-cast, quick-cast, and precision (drag-to-aim) per ability.
-- **Target priority toggle** (lowest HP / closest / heroes only), always visible on the HUD as a single button.
+- **Target priority toggle** (lowest HP / closest / heroes only), always visible as one button.
 - **Last-hit and tower-hit buttons** for players who want them; auto-targeting for players who don't.
 - **Camera nudge:** drag the minimap edge with your free thumb to peek without losing your hero.
-- **Tide awareness:** haptic pulse 15 s before a tide shift; the HUD clock fills like a wave.
+- **Tide awareness:** haptic pulse 5 s before a rise; another, stronger pulse when the direction commits. The arrow appears on the minimap where your eyes already are.
 - **Left-handed and custom layouts**, full HUD scale and opacity control.
 
-## 8. Social health
+## 11. Social health
 
 | Problem | Our answer |
 |---|---|
-| Toxic chat | No free-text all-chat. Team free-text is **off by default** (opt in per game). A rich **contextual ping wheel** handles 90% of communication: "Shrine in 15", "Tide turning, fall back", "I have ult". |
+| Toxic chat | No free-text all-chat. Team free-text is **off by default** (opt in per game). A **contextual ping wheel** handles most communication, including tide calls: "Turn in 15", "Current to Cliffs, collapse", "Upstream: push now". |
 | AFK / disconnects | After 45 s of inactivity, a **bot takes over** at near-player skill. Reconnect target under 5 s. The AFK player loses rank points; the other four lose **none** if they lose. |
-| Early forfeit fights | Surrender vote unlocks at 8:00, needs 4/5. Matches are short enough that "just play it out" is reasonable. |
-| Role conflict | Role queue in Ranked. Players who pick the least-requested role get a **Fill Bonus** (extra rank points on a win, cosmetic currency). |
+| Early forfeit fights | Surrender unlocks at 8:00, needs 4/5. |
+| Position conflict | Role queue across five positions. Players who queue for the least-requested position get a **Fill Bonus** (extra rank points on a win, cosmetic currency). |
 | Smurfing / boosting | Phone-number or platform account binding for Ranked; fast-track MMR for new accounts with high performance. |
-| Reporting that feels pointless | Report outcomes are sent to the reporter ("Action was taken on a player you reported"). |
+| Reporting that feels pointless | Reporters are told when action was taken on a player they reported. |
 
-Positive reinforcement: post-match **"Shout-outs"** (one tap to commend a teammate for a save, a call, or carrying), which feed a visible honor level and seasonal rewards.
+Post-match **Shout-outs** (one tap to commend a teammate for a save, a call, or carrying) feed a visible honor level and seasonal rewards.
 
-## 9. Modes
+## 12. Modes
 
 | Mode | Players | Length | Purpose |
 |---|---|---|---|
 | **Ranked** | 5v5, role queue | ~12–14 min | The core competitive game |
-| **Quick Play** | 5v5 | ~12–14 min | Same game, no rank, blind pick |
-| **Skirmish** | 3v3, one lane + jungle | ~7 min | Commute mode; also the best place to learn a hero |
+| **Quick Play** | 5v5, preferred positions | ~12–14 min | Same game, no rank |
+| **Skirmish** | 3v3: solo lane, jungle, mid-sized river | ~7 min | Commute mode; also the best place to learn the jungle and the Turn |
 | **Breakwater** | 5v5, single bridge, random heroes | ~10 min | Chaotic team-fight mode, rotates in on weekends |
 | **Co-op vs AI** | 1–5 players | ~12 min | Onboarding and practice |
 
-Onboarding: a 15-minute playable tutorial, then 5 guided bot matches that each introduce one system (tide, Shrines, items, Attunements, Leviathan). Players unlock Ranked after level 10 and owning 10 heroes.
+Onboarding: a 15-minute playable tutorial, then guided bot matches that each introduce one system (lanes and jungle, the tide and the Turn, Shrines, items, Attunements, the Leviathan). Ranked unlocks at level 10 with 10 heroes owned.
 
-## 10. Progression
+## 13. Progression
 
-- **Account level** unlocks modes and gives early heroes; it does not affect combat.
-- **Hero Mastery:** cosmetic tiers per hero (borders, emotes, title), plus a regional/national leaderboard per hero.
-- **Ranked:** seasonal ladder, 3 months per season. Rank protection on the first loss after promotion. Separate MMR per role.
+- **Account level** unlocks modes and gives early heroes; it never affects combat.
+- **Hero Mastery:** cosmetic tiers per hero (borders, emotes, titles), plus regional leaderboards per hero.
+- **Ranked:** three-month seasons, separate MMR per position, rank protection on the first loss after promotion.
 - **Clubs:** guilds with shared weekly goals and club-vs-club weekend events.
 
-## 11. Monetization
+## 14. Monetization
 
 A strict line: **pay for looks and convenience, never for power.**
 
-- **Skins** (the main revenue): tiered from simple recolors to "Tide-reactive" premium skins whose visuals change between high and low tide. Effects never change hitboxes or readability; every skin passes a clarity check.
-- **Tide Pass:** seasonal battle pass with a free track (includes 2 heroes) and a premium track. Premium pays for itself in currency if completed.
-- **Heroes:** buyable with premium currency for players who don't want to wait, always earnable for free.
-- **No loot boxes for heroes or items.** Any randomized cosmetic bundles show exact odds and include a pity guarantee, and are disabled in regions where they're restricted.
+- **Skins** (main revenue): from recolors to premium **Tide-reactive** skins whose visuals shift between low tide, high tide, and the Turn. Every skin passes a readability check (see the art direction document).
+- **Tide Pass:** seasonal battle pass with a free track (including 2 heroes) and a premium track that pays for itself in currency if completed.
+- **Heroes:** buyable with premium currency for players who don't want to wait; always earnable for free.
+- **No loot boxes for heroes or items.** Any randomized cosmetic bundles show exact odds, include a pity guarantee, and are disabled where restricted.
 - **Regional pricing** tuned for Southeast Asia, Latin America, and India.
 
-## 12. Esports & community
+## 15. Esports & community
 
-- In-client **spectator mode** with a delay, a broadcaster HUD, and replays from day one.
-- **Grassroots first:** in-client open tournaments every weekend (bracketed, automatically scheduled) before any pro league.
-- **Pro circuit** after year one, regional leagues feeding one world event.
-- **Creator program:** custom lobbies, replay export, clip highlights generated from each match.
-- Short matches make tournaments shorter too, which is good for viewers and broadcasters.
+- In-client **spectator mode** with delay, broadcaster HUD, and replays from day one. The Turn gets a dedicated broadcast moment: a split-screen showing both teams' reactions.
+- **Grassroots first:** automated in-client weekend tournaments before any pro league; a regional pro circuit after year one.
+- **Creator program:** custom lobbies, replay export, and automatically generated highlight clips (the Turn and the plays right after it are natural clip moments).
 
-## 13. Technology
+## 16. Technology: Unity
 
-| Area | Target |
+The game is built in **Unity**, which is proven at scale for mobile MOBAs and gives us broad device coverage, mature mobile tooling, and a large hiring pool.
+
+| Area | Choice |
 |---|---|
-| Engine | Unity (broad device support, mature mobile tooling) with a custom deterministic simulation core in C# |
-| Netcode | Server-authoritative simulation at 30 Hz, client-side prediction for movement and ability casts. The server decides what each client can see, so fog of war can't be broken by map hacks. |
-| Latency | Playable up to 120 ms. Regional servers in Singapore, Manila, Jakarta, São Paulo, Mumbai, Frankfurt, Virginia, Tokyo at launch |
+| Engine version | Latest **Unity 6 LTS** at production start, upgraded only between seasons |
+| Rendering | **Universal Render Pipeline (URP)** with per-device quality tiers. Details in the art direction document |
+| Scripting backend | IL2CPP on both platforms |
+| Simulation | A **deterministic game simulation written in plain C#** with fixed-point math, kept separate from Unity's `MonoBehaviour` world. Unity is the presentation layer: it draws what the simulation says. This lets the same simulation run on headless dedicated servers, in replays, and in automated balance testing |
+| Netcode | Server-authoritative at 30 Hz with client-side prediction for movement and casts. The server decides what each client can see (no map hacks) and holds the tide seed (no early knowledge of the current direction) |
+| Content delivery | **Addressables** for skins, heroes, and high-resolution packs downloaded on demand |
+| Latency | Playable up to 120 ms. Launch regions: Singapore, Manila, Jakarta, São Paulo, Mumbai, Frankfurt, Virginia, Tokyo |
 | Devices | 30 fps stable on 3 GB RAM Android (2021+ budget chips); 60 fps mid-range; 120 fps flagships |
-| Install size | Under 1 GB initial, with high-resolution assets downloaded optionally |
-| Match load time | Under 10 s on mid-range |
+| Install size | Under 1 GB initial download |
+| Match load | Under 10 s on mid-range |
 | Anti-cheat | Server authority + client integrity checks + replay-based detection of input automation |
-| Cross-play | iOS / Android shared queues from day one; a cloud/PC client is a later consideration |
+| Cross-play | iOS / Android shared queues from day one |
 
-## 14. World and art direction
+## 17. World
 
-**Setting:** *The Strand*, an archipelago where an ancient tide-god's heartbeat moves the ocean. Coastal city-states fight for control of the Hearts, sunken relics that let whoever holds them command the tide.
+**Setting:** *The Strand*, an archipelago where the heartbeat of a sleeping sea-god moves the ocean. Two coastal city-states fight for the **Hearts**, sunken relics that let whoever holds them command the tide. Nobody, not even the cities' tide-priests, can predict which way the sea will run when it rises; legend says the god chooses.
 
-**Look:** Bright, painterly, high-contrast. Warm sands and coral vs deep teal water. Characters have strong silhouettes that read at phone size, with each role sharing a visual language (Vanguards are broad and heavy, Wardens carry light sources, Marksmen have long horizontal lines).
+Full visual direction, including the look of each zone, the water, characters, and the Turn, is in the [art direction document](art-direction.md).
 
-**Readability rules:** Every ability telegraph uses team colors on top of skin effects. Water states (shallow / current) use color *and* texture patterns, so colorblind players can read the tide.
-
-## 15. Launch plan
+## 18. Launch plan
 
 | Phase | Timing (from greenlight) | Scope | Goal |
 |---|---|---|---|
-| Prototype | Months 0–6 | Graybox map, 6 heroes, tide system, bots | Prove the tide makes matches better, not just different |
-| Closed alpha | Months 7–12 | 15 heroes, Ranked, items | Tune match length and balance with ~5k players |
-| Soft launch | Months 13–18 | 24 heroes; Philippines, Brazil, Malaysia | Retention and monetization validation |
-| Global launch | Month 18–24 | 30 heroes, Clubs, open tournaments | Scale |
+| **0. Visual development** | Months 0–4 | Art bible, camera and scale tests, hero silhouettes, water and Turn look-dev, a "beauty corner" visual target in Unity | Lock the look and its performance budget before production code |
+| 1. Gameplay prototype | Months 3–8 | Graybox map, 8 heroes (including 2 jungle-naturals), tide and Turn, bots | Prove the random current makes matches better, not just different |
+| 2. Closed alpha | Months 9–14 | 15 heroes, Ranked, items, production art for the map | Tune match length and balance with ~5k players |
+| 3. Soft launch | Months 15–20 | 24 heroes; Philippines, Brazil, Malaysia | Retention and monetization validation |
+| 4. Global launch | Months 20–26 | 30 heroes, Clubs, open tournaments | Scale |
+
+Phases 0 and 1 overlap on purpose: gameplay prototyping uses throwaway code and graybox art, while the visual target is built in a separate Unity look-dev project. Production code starts once both pass their gates.
 
 ### Target metrics at soft launch
 
@@ -220,31 +328,34 @@ A strict line: **pay for looks and convenience, never for power.**
 | Median match length | 12–13 min |
 | Ranked queue time (median, peak) | < 45 s |
 | Games with an AFK-to-bot takeover | < 3% |
-| Support/Warden pick rate in role queue | ≥ 18% of queue entries without Fill Bonus |
+| Win-rate gap between current directions, per side | < 1 percentage point |
+| Jungle position share of queue entries (without Fill Bonus) | ≥ 18% |
 | Crash rate | < 0.5% of sessions |
 
-## 16. Risks and how we handle them
+## 19. Risks and how we handle them
 
 | Risk | Mitigation |
 |---|---|
-| Network effects: players stay where their friends are | Lean into regions underserved by competitors' servers or pricing; strong referral and squad-up rewards; launch Skirmish as an easy entry point |
-| The tide feels random or gimmicky | The tide is fully predictable and visible. If prototype players can't plan around it, we cut or simplify it before alpha |
-| Small launch roster | Attunements double effective variety; fast hero cadence after launch |
-| Short matches feel shallow to veterans | Depth lives in tide timing, Shrine choices, and Attunements, not in farm time. Track veteran retention separately |
-| Revenue without power sales | Proven cosmetic-led models in the genre; premium Tide-reactive skins as the flagship product |
-| Large IP competitors outspend us on marketing | Creator program, community tournaments from day one, and a game that is easy to clip and share |
+| Network effects: players stay where their friends are | Target regions underserved by competitors' servers or pricing; referral and squad-up rewards; Skirmish as an easy entry point |
+| Random direction feels unfair ("we lost because of the coin flip") | Both teams get the same information at the same moment; the map is symmetrical; the no-three-in-a-row rule limits streaks; telemetry tracks direction impact. If the gap exceeds target, we soften the speed modifiers before touching the randomness |
+| The Turn becomes noise players ignore | Make the downstream advantage strong enough to matter and short enough to require reaction; test with and without the mechanic in prototype |
+| Jungle is too hard for new players | Jungle-natural heroes are labelled in draft; Skirmish teaches it; recommended clear paths shown in the first 20 jungle games |
+| Small launch roster | Attunements double effective variety; ~4-week hero cadence |
+| Short matches feel shallow to veterans | Depth lives in tide timing, the Turn, Shrine choices, and Attunements, not farm time. Track veteran retention separately |
+| Large IP competitors outspend us | Creator program, community tournaments from day one, and a signature moment (the Turn) that's easy to clip and share |
 
-## 17. Open questions
+## 20. Open questions
 
-1. Should the jungle stay role-less, or does the high-ranked game need a dedicated jungler?
-2. Is 2 minutes the right tide interval, or should it speed up as the match goes on?
-3. Do we allow team free-text chat in Ranked at all?
-4. Do we need an original IP partnership or a transmedia plan (animated shorts) to compete for attention with established franchises?
-5. Should Skirmish (3v3) count toward a separate ranked ladder?
+1. Is 2 minutes the right churn interval during the Surge, or should it speed up?
+2. Should the "no three in a row" rule be shown to players, or left for them to discover?
+3. Should any rare effect (an item or ultimate) ever reveal the direction early, or is "nobody knows" sacred?
+4. Do we allow team free-text chat in Ranked at all?
+5. Should Skirmish (3v3) have its own ranked ladder?
+6. Do we need a transmedia plan (animated shorts) to compete for attention with established franchises?
 
 ## Next steps
 
-1. Build the graybox prototype: map, tide system, 6 heroes, bots.
-2. Run internal playtests comparing matches with and without the tide to confirm it improves pacing.
-3. Write detailed kits for the first 15 heroes.
+1. Start Phase 0: art bible, camera tests, and water/Turn look-dev (see the [art direction document](art-direction.md)).
+2. In parallel, build the graybox gameplay prototype: map, tide, the Turn, 8 heroes, bots.
+3. Write full kits for the first 15 heroes, with at least 4 jungle-naturals across 3 classes.
 4. Draft the Attunement and item lists and simulate gold and XP curves to hit the 12–13 min target.
